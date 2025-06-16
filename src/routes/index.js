@@ -1,7 +1,8 @@
 const config = require('../config')
 const RateLimit = require('koa2-ratelimit').RateLimit;
-const router = require('@koa/router')();
-const { listApps, describeApp, reloadApp, restartApp, stopApp } = require('../providers/pm2/api')
+const Router = require('@koa/router');
+const router = new Router();
+const { listApps, describeApp, reloadApp, restartApp, stopApp, reloadAllApp, restartAllApp, stopAllApps } = require('../providers/pm2/api')
 const { validateAdminUser } = require('../services/admin.service')
 const  { readLogsReverse } = require('../utils/read-logs.util')
 const { getCurrentGitBranch, getCurrentGitCommit } = require('../utils/git.util')
@@ -138,6 +139,63 @@ router.post('/api/apps/:appName/stop', isAuthenticated, async (ctx) => {
     try{
         let { appName } = ctx.params
         let apps =  await stopApp(appName)
+        if(Array.isArray(apps) && apps.length > 0){
+            return ctx.body = {
+                success: true
+            }
+        }
+        return ctx.body = {
+            success: false
+        }
+    }
+    catch(err){
+        return ctx.body = {
+            'error':  err
+        }
+    }
+});
+
+router.post('/api/apps/all/reload', isAuthenticated, async (ctx) => {
+    try{
+        let apps =  await reloadAllApp('all')
+        if(Array.isArray(apps) && apps.length > 0){
+            return ctx.body = {
+                success: true
+            }
+        }
+        return ctx.body = {
+            success: false
+        }
+    }
+    catch(err){
+        return ctx.body = {
+            'error':  err
+        }
+    }
+});
+
+router.post('/api/apps/all/restart', isAuthenticated, async (ctx) => {
+    try{
+        let apps =  await restartAllApp('all')
+        if(Array.isArray(apps) && apps.length > 0){
+            return ctx.body = {
+                success: true
+            }
+        }
+        return ctx.body = {
+            success: false
+        }
+    }
+    catch(err){
+        return ctx.body = {
+            'error':  err
+        }
+    }
+});
+
+router.post('/api/apps/all/stop', isAuthenticated, async (ctx) => {
+    try{
+        let apps =  await stopAllApps('all')
         if(Array.isArray(apps) && apps.length > 0){
             return ctx.body = {
                 success: true

@@ -16,9 +16,12 @@ function listApps(){
                     return {
                         name: app.name,
                         status: app.pm2_env.status,
+                        version: app.pm2_env.version,
                         cpu: app.monit.cpu,
                         memory: bytesToSize(app.monit.memory),
                         uptime: timeSince(app.pm2_env.pm_uptime),
+                        created: timeSince(app.pm2_env.created_at),
+                        watch: app.pm2_env.watch,
                         pm_id: app.pm_id
                     }
                 })
@@ -51,9 +54,11 @@ function describeApp(appName){
                         pm_err_log_path: apps[0].pm2_env.pm_err_log_path,
                         pm2_env_cwd: apps[0].pm2_env.pm_cwd
                     }
+                    console.log('Passou no resolve')
                     resolve(app)
                 }
                 else{
+                    console.log('chegou foi no ELSE')
                     resolve(null)
                 }
             })
@@ -112,11 +117,65 @@ function restartApp(process){
     })
 }
 
+function reloadAllApp(process){
+    return new Promise((resolve, reject) => {
+        pm2.connect((err) => {
+            if (err) {
+                reject(err)
+            }
+            pm2.reload(process, (err, proc) => {
+                pm2.disconnect()
+                if (err) {
+                    reject(err)
+                }
+                resolve(proc)
+            })
+        })
+    })
+}
+
+function restartAllApp(process){
+    return new Promise((resolve, reject) => {
+        pm2.connect((err) => {
+            if (err) {
+                reject(err)
+            }
+            pm2.restart(process, (err, proc) => {
+                pm2.disconnect()
+                if (err) {
+                    reject(err)
+                }
+                resolve(proc)
+            })
+        })
+    })
+}
+
+function stopAllApps(process){
+    return new Promise((resolve, reject) => {
+        pm2.connect((err) => {
+            if (err) {
+                reject(err)
+            }
+            pm2.stop(process, (err, proc) => {
+                pm2.disconnect()
+                if (err) {
+                    reject(err)
+                }
+                resolve(proc)
+            })
+        })
+    })
+}
+
 module.exports = {
     listApps,
     describeApp,
     reloadApp,
     stopApp,
-    restartApp
+    restartApp,
+    reloadAllApp,
+    restartAllApp,
+    stopAllApps
 }
 

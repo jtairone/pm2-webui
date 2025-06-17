@@ -193,23 +193,19 @@ function addApp(appConfig) {
     return new Promise((resolve, reject) => {
         pm2.connect((err) => {
             if (err) return reject(err);
-
-            // Se existirem argumentos, adiciona ao script
-            if (appConfig.args) {
-                appConfig.script = `${appConfig.script} ${appConfig.args}`;
-            }
-            const scriptDir = path.dirname(appConfig.script);
-
-            // Configuração estendida com variáveis de ambiente
+            
             const fullConfig = {
                 name: appConfig.name,
                 script: appConfig.script,
-                cwd: scriptDir,
+                cwd: path.dirname(appConfig.script), // Importante!
+                args: appConfig.args ? appConfig.args.split(' ') : [],
                 env: {
+                    ...(appConfig.nodeEnv && { NODE_ENV: appConfig.nodeEnv }),
                     ...(appConfig.port && { PORT: appConfig.port }),
-                    ...(appConfig.nodeEnv && { NODE_ENV: appConfig.nodeEnv }) // Só adiciona se existir
+                    NODE_CONFIG_DIR: path.join(path.dirname(appConfig.script), 'config')
                 }
             };
+
             pm2.start(fullConfig, (err, apps) => {
                 pm2.disconnect();
                 if (err) return reject(err);

@@ -62,10 +62,10 @@ io.on('connection', (socket) => {
     // Envia os dados do PM2 assim que conecta
     socketHandler.emitPm2Status(socket);
     
-    // Atualiza a cada 10 segundos (envia o status de cada aplicação para atualizar!)
+    // Atualiza a cada 3 segundos (envia o status de cada aplicação para atualizar!)
     const interval = setInterval(() => {
         socketHandler.emitPm2Status(socket);
-    }, 10000);
+    }, 3000);
 
     // Limpa o intervalo ao desconectar
     socket.on('disconnect', () => {

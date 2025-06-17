@@ -59,14 +59,59 @@
 <script>
   document.getElementById('addAppForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const formData = {
       name: e.target.appName.value,
       script: e.target.appPath.value,
+      path: e.target.appPath.value,
+      args: e.target.appArgs.value,
+      nodeEnv: e.target.nodeEnv.value,
       port: e.target.appPort.value || undefined,
     };
-
     try {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+
+      const response = await fetch('/api/apps/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if(response.ok){
+        await Toast.fire({
+          icon: "success",
+          title: "Aplicação cadastrada com sucesso!"
+        });
+        window.location.href = '/';
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro desconhecido');
+      }
+    } catch (error) {
+        Swal.fire({
+          position: "top-end",
+          icon: "error",
+          title: "Erro ao cadastrar",
+          text: error.message,
+          showConfirmButton: false,
+          timer: 3000,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+    }
+
+    /* try {
       const response = await fetch('/api/apps/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,6 +126,6 @@
       }
     } catch (err) {
       alert('Erro ao adicionar aplicação: ' + err.message);
-    }
+    } */
   });
 </script>

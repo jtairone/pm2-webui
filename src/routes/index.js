@@ -2,7 +2,7 @@ const config = require('../config')
 const RateLimit = require('koa2-ratelimit').RateLimit;
 const Router = require('@koa/router');
 const router = new Router();
-const { listApps, describeApp, reloadApp, restartApp, stopApp, reloadAllApp, restartAllApp, stopAllApps } = require('../providers/pm2/api')
+const { listApps, describeApp, reloadApp, restartApp, stopApp, reloadAllApp, restartAllApp, stopAllApps, addApp, deleteApp } = require('../providers/pm2/api')
 const { validateAdminUser } = require('../services/admin.service')
 const  { readLogsReverse } = require('../utils/read-logs.util')
 const { getCurrentGitBranch, getCurrentGitCommit } = require('../utils/git.util')
@@ -48,6 +48,10 @@ router.get('/logout', (ctx)=>{
     ctx.session = null;
     return ctx.redirect('/login')
 })
+
+router.get('/apps/add-app', async (ctx) => {
+  await ctx.render('apps/add-app'); // Renderiza add-app.html
+});
 
 router.get('/apps/:appName', isAuthenticated, async (ctx) => {
     const { appName } = ctx.params
@@ -209,6 +213,55 @@ router.post('/api/apps/all/stop', isAuthenticated, async (ctx) => {
         return ctx.body = {
             'error':  err
         }
+    }
+});
+
+router.post('/api/apps/:appName/delete', isAuthenticated, async (ctx) => {
+    try{
+        let { appName } = ctx.params
+        let apps =  await deleteApp(appName)
+        if(Array.isArray(apps) && apps.length > 0){
+            return ctx.body = {
+                success: true
+            }
+        }
+        return ctx.body = {
+            success: false
+        }
+    }
+    catch(err){
+        return ctx.body = {
+            'error':  err
+        }
+    }
+});
+
+// Rota para adicionar uma nova aplicação
+router.post('/api/apps/add', async (ctx) => {
+    const { name, script, port, args, nodeEnv } = ctx.request.body;
+
+    if (!name || !script) {
+    ctx.status = 400;
+    ctx.body = { message: "Nome e caminho do script são obrigatórios!" };
+    return;
+    }
+
+    try { 
+    const appConfig = {
+        name,
+        script,
+        ...(args && { args }),  // Adiciona os argumentos se existirem
+        ...(port && { env: { PORT: port } }), // Adiciona porta se existir
+        ...(nodeEnv && { nodeEnv }) // Passa apenas se definido
+    };
+
+    await addApp(appConfig)
+
+    ctx.status = 200;
+    ctx.body = { message: "Aplicação adicionada e iniciada com sucesso!" };
+    } catch (err) {
+        ctx.status = 500;
+        ctx.body = { message: `Erro ao adicionar aplicação: ${err.message}` };
     }
 });
 

@@ -1,4 +1,5 @@
 const pm2 = require('pm2');
+const path = require('path')
 const { bytesToSize, timeSince } = require('./ux.helper')
 
 function listApps(){
@@ -168,6 +169,56 @@ function stopAllApps(process){
     })
 }
 
+function deleteApp(process) {
+    return new Promise((resolve, reject) => {
+        pm2.connect((err) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            pm2.delete(process, (err, proc) => {
+                pm2.disconnect();
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(proc);
+                }
+            });
+        });
+    });
+}
+
+function addApp(appConfig) {
+    return new Promise((resolve, reject) => {
+        pm2.connect((err) => {
+            if (err) return reject(err);
+
+            // Se existirem argumentos, adiciona ao script
+            if (appConfig.args) {
+                appConfig.script = `${appConfig.script} ${appConfig.args}`;
+            }
+            const scriptDir = path.dirname(appConfig.script);
+
+            // Configuração estendida com variáveis de ambiente
+            const fullConfig = {
+                name: appConfig.name,
+                script: appConfig.script,
+                cwd: scriptDir,
+                env: {
+                    ...(appConfig.port && { PORT: appConfig.port }),
+                    ...(appConfig.nodeEnv && { NODE_ENV: appConfig.nodeEnv }) // Só adiciona se existir
+                }
+            };
+            pm2.start(fullConfig, (err, apps) => {
+                pm2.disconnect();
+                if (err) return reject(err);
+                resolve(apps);
+            });
+        });
+    });
+}
+
 module.exports = {
     listApps,
     describeApp,
@@ -176,6 +227,8 @@ module.exports = {
     restartApp,
     reloadAllApp,
     restartAllApp,
-    stopAllApps
+    stopAllApps,
+    addApp,
+    deleteApp
 }
 

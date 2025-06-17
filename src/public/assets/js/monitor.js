@@ -1,4 +1,4 @@
- const socket = io('http://localhost:4343');
+ const socket = io();
   // Atualiza os cards quando receber novos dados
   socket.on('pm2-status', (apps) => {
     updateAppCards(apps);

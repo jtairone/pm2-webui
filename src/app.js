@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
     });
 });
 
-httpServer.listen(config.PORT, config.HOST, ()=>{
+httpServer.listen(config.PORT, ()=>{
     console.log(`Aplicação Rodando em http://localhost:${config.PORT}`)
 })
 

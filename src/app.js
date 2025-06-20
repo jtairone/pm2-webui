@@ -7,10 +7,10 @@ const path = require('path');
 const serve = require('koa-static');
 const render = require('koa-ejs');
 const { koaBody } = require('koa-body');
-//const session = require('koa-session');
 const session = require('koa-session').default;;
 const Koa = require('koa');
 const router = require("./routes");
+const { initializeDatabase } = require('./config/database');
 
 // Novas dependências para WebSocket
 const { createServer } = require('http');
@@ -19,10 +19,10 @@ const socketHandler = require('./sockets');
 
 // Init Application
 
-if(!config.APP_USERNAME || !config.APP_PASSWORD){
+/* if(!config.APP_USERNAME || !config.APP_PASSWORD){
     console.log("You must first setup admin user. Run command -> npm run setup-admin-user")
     process.exit(2)
-}
+} */
 
 if(!config.APP_SESSION_SECRET){
     const randomString = generateRandomString()
@@ -73,9 +73,10 @@ io.on('connection', (socket) => {
         //console.log('Cliente desconectado:', socket.id);
     });
 });
-
-httpServer.listen(config.PORT, ()=>{
-    console.log(`Aplicação Rodando em http://localhost:${config.PORT}`)
+initializeDatabase().then(() => {
+    httpServer.listen(config.PORT, ()=>{
+        console.log(`Aplicação Rodando em http://localhost:${config.PORT}`)
+    });
 })
 
 /* app.listen(config.PORT, config.HOST, ()=>{

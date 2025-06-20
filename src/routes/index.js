@@ -10,12 +10,26 @@ const { getEnvFileContent } = require('../utils/env.util')
 const { isAuthenticated, checkAuthentication }= require('../middlewares/auth')
 const AnsiConverter = require('ansi-to-html');
 const ansiConvert = new AnsiConverter();
+const authRouter = require('./auth');
+const { hasAdminUser } = require('../services/user.service');
+
+// função middleware antes das rotas
+router.use(async (ctx, next) => {
+    const hasAdmin = await hasAdminUser();
+    if (!hasAdmin && ctx.path !== '/setup' && ctx.path !== '/setup/post') {
+        return ctx.redirect('/setup');
+    }
+    await next();
+});
+
+// Inclua as rotas de autenticação
+router.use(authRouter.routes());
 
 const loginRateLimiter = RateLimit.middleware({
     interval: 2*60*1000, // 2 minutes
     max: 100,
     prefixKey: '/login' // to allow the bdd to Differentiate the endpoint 
-  });
+});
 
 router.get('/', async (ctx) => {
     return ctx.redirect('/login')
@@ -30,17 +44,27 @@ router.post('/login', loginRateLimiter, checkAuthentication, async (ctx) => {
     try {
         await validateAdminUser(username, password)
         ctx.session.isAuthenticated = true;
+        ctx.session.user = { username }; // Armazena informações do usuário na sessão
         return ctx.redirect('/apps')
     }
     catch(err){
-        return await ctx.render('auth/login', {layout : false, login: { username, password, error: err.message }})
+        //return await ctx.render('auth/login', {layout : false, login: { username, password, error: err.message }})
+        return await ctx.render('auth/login', {
+            layout: false, 
+            login: { 
+                username, 
+                password, 
+                error: err.message 
+            }
+        });
     }
 })
 
 router.get('/apps', isAuthenticated, async (ctx) => {
     const apps =  await listApps()
     return await ctx.render('apps/dashboard', {
-      apps
+        apps,
+        session: ctx.session
     });
 });
 

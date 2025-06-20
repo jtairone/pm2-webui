@@ -55,11 +55,9 @@ function describeApp(appName){
                         pm_err_log_path: apps[0].pm2_env.pm_err_log_path,
                         pm2_env_cwd: apps[0].pm2_env.pm_cwd
                     }
-                    console.log('Passou no resolve')
                     resolve(app)
                 }
                 else{
-                    console.log('chegou foi no ELSE')
                     resolve(null)
                 }
             })

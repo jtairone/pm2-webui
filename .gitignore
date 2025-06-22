@@ -120,3 +120,6 @@ dist
 
 # Temp Folder
 .tmp
+
+src/config/database.sqlite
+package-lock.json

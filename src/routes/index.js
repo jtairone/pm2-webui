@@ -7,7 +7,7 @@ const { validateAdminUser } = require('../services/admin.service')
 const  { readLogsReverse } = require('../utils/read-logs.util')
 const { getCurrentGitBranch, getCurrentGitCommit } = require('../utils/git.util')
 const { getEnvFileContent } = require('../utils/env.util')
-const { isAuthenticated, checkAuthentication }= require('../middlewares/auth')
+const { isAuthenticated, checkAuthentication, checkAdmin }= require('../middlewares/auth')
 const AnsiConverter = require('ansi-to-html');
 const ansiConvert = new AnsiConverter();
 const authRouter = require('./auth');
@@ -42,9 +42,11 @@ router.get('/login', loginRateLimiter, checkAuthentication, async (ctx) => {
 router.post('/login', loginRateLimiter, checkAuthentication, async (ctx) => {
     const { username, password } = ctx.request.body;
     try {
-        await validateAdminUser(username, password)
+        const user = await validateAdminUser(username, password)
         ctx.session.isAuthenticated = true;
         ctx.session.user = { username }; // Armazena informações do usuário na sessão
+        const isAdmin = user ? user.is_admin  : false;
+        ctx.session.isAdmin =  isAdmin 
         return ctx.redirect('/apps')
     }
     catch(err){
@@ -68,7 +70,7 @@ router.get('/apps', isAuthenticated, async (ctx) => {
     });
 });
 
-router.get('/cadastrar', isAuthenticated, async (ctx) => {
+router.get('/cadastrar', isAuthenticated, checkAdmin, async (ctx) => {
     const users =  await getAllUsers()
     return await ctx.render('apps/cadastrar', {
         users,
@@ -109,13 +111,13 @@ router.delete('/cadastrar/:userId', isAuthenticated, async (ctx) => {
     return ctx.status = 200;
 });
 
-router.get('/logout', (ctx)=>{
+router.get('/logout', isAuthenticated, (ctx)=>{
     ctx.session = null;
     return ctx.redirect('/login')
 })
 
-router.get('/apps/add-app', async (ctx) => {
-  await ctx.render('apps/add-app'); // Renderiza add-app.html
+router.get('/apps/add-app', isAuthenticated, checkAdmin, async (ctx) => {
+  await ctx.render('apps/add-app', {session: ctx.session}); // Renderiza add-app.html
 });
 
 router.get('/apps/:appName', isAuthenticated, async (ctx) => {
@@ -302,7 +304,7 @@ router.post('/api/apps/:appName/delete', isAuthenticated, async (ctx) => {
 });
 
 // Rota para adicionar uma nova aplicação
-router.post('/api/apps/add', async (ctx) => {
+router.post('/api/apps/add', isAuthenticated, async (ctx) => {
     const { name, script, port, args, nodeEnv } = ctx.request.body;
 
     if (!name || !script) {

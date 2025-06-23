@@ -11,7 +11,7 @@ const { isAuthenticated, checkAuthentication }= require('../middlewares/auth')
 const AnsiConverter = require('ansi-to-html');
 const ansiConvert = new AnsiConverter();
 const authRouter = require('./auth');
-const { hasAdminUser } = require('../services/user.service');
+const { hasAdminUser, getAllUsers, getUserById, createUser, updateUser, deleteUserById  } = require('../services/user.service');
 
 // função middleware antes das rotas
 router.use(async (ctx, next) => {
@@ -66,6 +66,47 @@ router.get('/apps', isAuthenticated, async (ctx) => {
         apps,
         session: ctx.session
     });
+});
+
+router.get('/cadastrar', isAuthenticated, async (ctx) => {
+    const users =  await getAllUsers()
+    return await ctx.render('apps/cadastrar', {
+        users,
+        session: ctx.session
+    });
+});
+
+router.get('/getuser/:id', isAuthenticated, async (ctx) => {
+    const { id } = ctx.params
+    const user =  await getUserById(id)
+    ctx.body = { 
+        username: user.username,
+        password: user.password // Cuidado: geralmente não se envia a senha!
+    };
+});
+
+router.post('/cadastrar', isAuthenticated, async (ctx) => {
+    const { username, password } = ctx.request.body;
+    await createUser(username, password)
+    return ctx.redirect('/cadastrar')
+});
+
+router.put('/updateuser/:id', isAuthenticated, async (ctx) => {
+    const { id } = ctx.params;
+    const { username, password, isAdmin } = ctx.request.body;
+    try {
+        const result = await updateUser(id, { username, password, isAdmin });
+        ctx.body = result;
+    } catch (error) {
+        ctx.status = 400;
+        ctx.body = { error: error.message };
+    }
+});
+
+router.delete('/cadastrar/:userId', isAuthenticated, async (ctx) => {
+    const { userId } = ctx.params;
+    await deleteUserById(userId)
+    return ctx.status = 200;
 });
 
 router.get('/logout', (ctx)=>{

@@ -24,7 +24,7 @@ const createAdminUser = (username, password) => {
 
 async function validateAdminUser(username, password) {
   const user = await validateUser(username, password);
-  if (!user || !user.is_admin) {
+  if (!user) {
     throw new Error('Credenciais inválidas ou usuário não é administrador');
   }
   return user;

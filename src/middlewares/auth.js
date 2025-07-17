@@ -29,7 +29,17 @@ async function checkAuthentication(ctx, next) {
     return next();
 }
 
+function checkAdmin(ctx, next) {
+    if (ctx.session.isAuthenticated && ctx.session.isAdmin) {
+        return next();
+    } else {
+        //ctx.status = 403; // Forbidden
+        return ctx.redirect('/apps'); // Ou redirecione para outra página
+    }
+}
+
 module.exports = {
     isAuthenticated,
     checkAuthentication,
+    checkAdmin
 };

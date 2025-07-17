@@ -11,6 +11,7 @@ const session = require('koa-session').default;;
 const Koa = require('koa');
 const router = require("./routes");
 const { initializeDatabase } = require('./config/database');
+const os = require('os')
 
 // Novas dependências para WebSocket
 const { createServer } = require('http');
@@ -18,11 +19,6 @@ const { Server } = require('socket.io');
 const socketHandler = require('./sockets'); 
 
 // Init Application
-
-/* if(!config.APP_USERNAME || !config.APP_PASSWORD){
-    console.log("You must first setup admin user. Run command -> npm run setup-admin-user")
-    process.exit(2)
-} */
 
 if(!config.APP_SESSION_SECRET){
     const randomString = generateRandomString()
@@ -73,12 +69,22 @@ io.on('connection', (socket) => {
         //console.log('Cliente desconectado:', socket.id);
     });
 });
+
+function getLocalExternalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+            return iface.address;
+        }
+        }
+    }
+    return 'localhost';
+}
+
 initializeDatabase().then(() => {
     httpServer.listen(config.PORT, ()=>{
-        console.log(`Aplicação Rodando em http://localhost:${config.PORT}`)
+        const ip = getLocalExternalIP();
+        console.log(`Aplicação PM2-WebUi Rodando em http://${ip}:${config.PORT}`)
     });
 })
-
-/* app.listen(config.PORT, config.HOST, ()=>{
-    console.log(`Aplicação Rodando em http://localhost:${config.PORT}`)
-}) */

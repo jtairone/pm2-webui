@@ -65,3 +65,8 @@ body.dark-mode .darkmode-fab:hover {
   background: #fffbe7;
   color: #181a1b;
 } 
+
+body.dark-mode .card-footer {
+  background-color: #b9b5b5 !important;
+  /* color: #23272b !important; */
+} 

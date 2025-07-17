@@ -13,12 +13,12 @@ body.dark-mode .table {
   background-color: #23272b !important;
   color: #e0e0e0 !important;
 }
-body.dark-mode .btn,
+/* body.dark-mode .btn,
 body.dark-mode .form-control {
   background-color: #23272b !important;
   color: #e0e0e0 !important;
   border-color: #444 !important;
-}
+} */
 body.dark-mode .form-control:focus {
   background-color: #23272b !important;
   color: #fff !important;

@@ -42,3 +42,17 @@ document.querySelector('#form').addEventListener('submit', async function(e) {
         swalInstance.close(); // Fecha o loading
     }
 });
+
+const avatar = document.getElementById('avatar-img');
+const passwordInput = document.getElementById('password');
+let vendado = false;
+
+passwordInput.addEventListener('input', function() {
+    if (!vendado && passwordInput.value.length > 0) {
+        avatar.style.backgroundImage = "url('/assets/images/app/user_vendado.svg')";
+        vendado = true;
+    } else if (vendado && passwordInput.value.length === 0) {
+        avatar.style.backgroundImage = "url('/assets/images/app/user.svg')";
+        vendado = false;
+    }
+});

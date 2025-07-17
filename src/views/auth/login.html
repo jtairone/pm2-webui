@@ -17,13 +17,13 @@
           <h2 class="card-title">Login Aplicação</h2>
         </div>
         <div class="mb-3">
-          <span class="avatar avatar-xl mb-3" style="background-image: url(/assets/images/app/user.svg)"></span>
+          <span id="avatar-img" class="avatar avatar-xl mb-3" style="background-image: url(/assets/images/app/user.svg)"></span>
         </div>
         <div class="mb-3">
           <input name="username" type="username" class="form-control text-center" placeholder="Usuário" value="<%= login.username %>" required>
         </div>
         <div class="mb-4">
-          <input name="password" type="password" class="form-control text-center" placeholder="Senha" value="<%= login.password %>" required>
+          <input id="password" name="password" type="password" class="form-control text-center" placeholder="Senha" required>
         </div>
         <div class="mb-3">
           <button class="btn btn-primary w-100 btn-submit" type="submit">

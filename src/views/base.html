@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/@tabler/core@1.0.0-beta2/dist/js/tabler.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@tabler/core@1.0.0-beta2/dist/css/tabler.min.css">
     <link href="/assets/css/prism.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/darkmode.css">
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header class="navbar navbar-expand-md navbar-light d-print-none">
@@ -16,7 +17,7 @@
           </button>
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
             <a href=".">
-              <img src="/assets/images/app/logo-dark.png" width="110" height="32" alt="PM2 WebUI Logo" class="navbar-brand-image">
+              <img id="logo" src="/assets/images/app/logo-dark.png" width="110" height="32" alt="PM2 WebUI Logo" class="navbar-brand-image">
             </a>
           </h1>
           <div class="navbar-nav flex-row order-md-last">
@@ -31,7 +32,7 @@
               </a>
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
                 <% if (session.isAdmin) {%>
-                <a href="/cadastrar" class="dropdown-item">
+                 <a href="/cadastrar" class="dropdown-item">
                   <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-user-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg>  
                   &ensp;Cadastrar Usuário
                 </a>
@@ -70,7 +71,45 @@
                 </div>
             </div>
         </footer>
+    <!-- Botão flutuante de dark mode -->
+    <button id="toggle-darkmode" class="darkmode-fab" title="Alternar modo escuro">
+      <span id="darkmode-icon">
+        <!-- Ícone Lua (modo claro) -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+      </span>
+    </button>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/assets/js/main.js"></script>
+  <script>
+    const logo = document.querySelector('#logo');
+    const darkmodeBtn = document.getElementById('toggle-darkmode');
+    const darkmodeIcon = document.getElementById('darkmode-icon');
+
+    function setDarkModeIcon(isDark) {
+      darkmodeIcon.innerHTML = isDark
+        // Ícone Sol (modo escuro)
+        ? `<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+        // Ícone Lua (modo claro)
+        : `<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>`;
+    }
+
+    darkmodeBtn.addEventListener('click', function() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+      logo.src = isDark ? '/assets/images/app/logo-light.png' : '/assets/images/app/logo-dark.png';
+      setDarkModeIcon(isDark);
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+      const isDark = localStorage.getItem('darkMode') === 'true';
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+        logo.src = '/assets/images/app/logo-light.png';
+      } else {
+        logo.src = '/assets/images/app/logo-dark.png';
+      }
+      setDarkModeIcon(isDark);
+    });
+  </script>
 </body>
 </html>

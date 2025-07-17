@@ -20,7 +20,7 @@ async function initializeDatabase() {
       table.boolean('is_admin').defaultTo(false);
       table.timestamps(true, true);
     });
-    console.log('Tabela de usuários criada com sucesso!');
+    //console.log('Tabela de usuários criada com sucesso!');
   }
 }
 

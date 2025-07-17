@@ -17,13 +17,15 @@ npm install
 cp env.example .env
 npm start
 ```
+No arquivo .env copiado do env.example preencher o APP_SESSION_SECRET com uma chave e rodar o projeto
+
 ##### PARA DESENVOLVIMENTO
 ```
 npm run start:dev
 ```
 
 #### TODO
-- [ ] Adicionar paigna cadastrar mais usuários
+- [x] Adicionar paigna cadastrar mais usuários
 - [ ] Adicionar Usuários selecionar a foto do perfil
 - [ ] Adicionar logs em tempo real
 - [ ] Adicionar terminal web

@@ -42,6 +42,8 @@ router.post('/setup', async (ctx) => {
   
   try {
     await createUser(username, password, true);
+    ctx.session.isAuthenticated = true;
+    ctx.session.user = { username };
     return ctx.redirect('/login');
   } catch (err) {
     return ctx.render('auth/setup', {

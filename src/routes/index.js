@@ -140,7 +140,8 @@ router.get('/apps/:appName', isAuthenticated, async (ctx) => {
             logs: {
                 stdout,
                 stderr
-            }
+            },
+            session: ctx.session // <-- Adicione esta linha!
         });
     }
     return ctx.redirect('/apps')

@@ -35,6 +35,80 @@
             margin-bottom: 0.3rem;
             font-weight: 400;
         }
+        .profile-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ddd;
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .profile-img-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px auto;
+            display: block;
+        }
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .file-input-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .file-input-label:hover {
+            background-color: #0b5ed7;
+        }
+        .profile-curtain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #23272b 80%, #b9b5b5 100%);
+            opacity: 0.92;
+            pointer-events: none;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.5s cubic-bezier(.77,0,.18,1);
+            z-index: 2;
+        }
+        .profile-curtain.active {
+            transform: scaleY(1);
+        }
+        .swal-profile-curtain {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: linear-gradient(180deg, #23272b 80%, #b9b5b5 100%);
+          opacity: 0.92;
+          pointer-events: none;
+          transform: scaleY(0);
+          transform-origin: top;
+          transition: transform 0.5s cubic-bezier(.77,0,.18,1);
+          z-index: 2;
+        }
+        .swal-profile-curtain.active {
+          transform: scaleY(1);
+        }
     </style>
 </head>
 <body>
@@ -49,6 +123,20 @@
                     </div>
                     <div class="card-body">
                         <form id="formUsuario">
+                            <div class="row g-3 mt-2 p-2">
+                                <div class="col-12 text-center">
+                                    <label class="form-label">Foto de Perfil</label>
+                                    <div class="mb-2 profile-img-container" style="position:relative; width:100px; height:100px; margin:0 auto 10px auto;">
+                                        <img id="profile-preview" src="/assets/images/app/user.svg" alt="Preview" class="profile-preview">
+                                        <div id="profile-curtain" class="profile-curtain"></div>
+                                        <input type="file" id="profile-photo" accept="image/*" style="display:none;" onchange="previewImage(this)">
+                                        <label for="profile-photo"
+                                          style="position:absolute;bottom:-10px;right:-10px;background:#0d6efd;color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;cursor:pointer;transition:background 0.2s;z-index:3;">
+                                          <i class="bi bi-camera" style="font-size:1.3rem;"></i>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="usuario" class="form-label">Nome de Usuário</label>
@@ -59,6 +147,7 @@
                                     <input type="password" class="form-control" id="senha" required>
                                 </div>
                             </div>
+                            
                             <div class="mt-4 text-end">
                                 <button type="reset" class="btn btn-secondary me-2">
                                     <i class="bi bi-x-lg"></i> Limpar
@@ -127,32 +216,49 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Função para preview da imagem
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profile-preview').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         // Exemplo de JavaScript para manipular o formulário
         document.getElementById('formUsuario').addEventListener('submit', async function(e) {
             e.preventDefault();
             // Aqui você capturaria os valores do formulário
             const usuario = document.getElementById('usuario').value;
             const senha = document.getElementById('senha').value;
-            const dados = { username: usuario, password: senha}
-            const response = await fetch('/cadastrar', {
-              method:'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(dados)
+            const profilePhoto = document.getElementById('profile-photo').files[0];
+            
+            // Criar FormData para enviar arquivo
+            const formData = new FormData();
+            formData.append('username', usuario);
+            formData.append('password', senha);
+            if (profilePhoto) {
+                formData.append('profilePhoto', profilePhoto);
+            }
 
+            const response = await fetch('/cadastrar', {
+                method:'POST',
+                body: formData // Enviar FormData em vez de JSON
             })
 
             if(response.ok){
                 Swal.fire({
-                  title: "Cadastrado Sucesso!",
-                  position: "top-end", 
-                  icon: "success",
-                  draggable: true,
-                  timer: 1500
+                    title: "Cadastrado Sucesso!",
+                    position: "top-end", 
+                    icon: "success",
+                    draggable: true,
+                    timer: 1500
                 }).then(()=>{
-                  this.reset();
-                  location.reload();
+                    this.reset();
+                    document.getElementById('profile-preview').src = '/assets/images/app/user.svg';
+                    location.reload();
                 });
             }
         });
@@ -164,26 +270,27 @@
                     throw new Error('Falha ao carregar usuário. Status: ' + response.status);
                 }
                 const userData = await response.json();
+                const currentPhoto = userData.photoUrl || '/assets/images/app/user.svg'; // ajuste conforme seu backend
+
                 const { value: formValues } = await Swal.fire({
                     title: 'Editar Usuário',
-                    html:
-                        `<div class="swal2-form">
-                            <div class="form-group">
-                                <label for="swal-username">Nome de usuário:</label>
-                                <input id="swal-username" class="swal2-input" 
-                                      value="${userData.username || ''}" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="swal-password">Nova senha:</label>
-                                <input id="swal-password" class="swal2-input" 
-                                      type="password" placeholder="Deixe em branco para manter a atual">
-                            </div>
-                            <div class="form-group">
-                                <label for="swal-confirm">Confirme a senha:</label>
-                                <input id="swal-confirm" class="swal2-input" 
-                                      type="password">
-                            </div>
-                        </div>`,
+                    html: `
+                        <div class="swal2-form" style="text-align:center;">
+                          <div style="position:relative; width:90px; height:90px; margin:0 auto 18px auto;">
+                            <img id="swal-profile-preview" src="${currentPhoto}" alt="Preview"
+                              style="width:100%;height:100%;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px #0001;border:3px solid #e0e0e0;position:absolute;left:0;top:0;">
+                            <input type="file" id="swal-profile-photo" accept="image/*" style="display:none;">
+                            <label for="swal-profile-photo"
+                              style="position:absolute;bottom:-10px;right:-10px;background:#0d6efd;color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;cursor:pointer;transition:background 0.2s;">
+                              <i class="bi bi-camera" style="font-size:1.3rem;"></i>
+                            </label>
+                            <div id="swal-profile-curtain" class="swal-profile-curtain"></div>
+                          </div>
+                          <input id="swal-username" class="swal2-input" style="margin-top:18px;" value="${userData.username || ''}" placeholder="Nome de usuário" required>
+                          <input id="swal-password" class="swal2-input" type="password" placeholder="Nova senha">
+                          <input id="swal-confirm" class="swal2-input" type="password" placeholder="Confirme a senha">
+                        </div>
+                    `,
                     focusConfirm: false,
                     showCancelButton: true,
                     confirmButtonText: 'Salvar',
@@ -194,31 +301,77 @@
                         const username = document.getElementById('swal-username').value.trim();
                         const password = document.getElementById('swal-password').value;
                         const confirmPassword = document.getElementById('swal-confirm').value;
+                        const photoInput = document.getElementById('swal-profile-photo');
+                        const photoFile = photoInput.files[0];
 
                         if (!username) {
                             Swal.showValidationMessage('Nome de usuário é obrigatório');
                             return false;
                         }
-
                         if (password !== confirmPassword) {
                             Swal.showValidationMessage('As senhas não coincidem');
                             return false;
                         }
-
                         return {
-                            username: username,
-                            password: password || undefined // Envia undefined se a senha estiver vazia
+                            username,
+                            password: password || undefined,
+                            photoFile
                         };
                     },
                     didOpen: () => {
-                        // Foco no primeiro campo
+                        const photoInput = document.getElementById('swal-profile-photo');
+                        const preview = document.getElementById('swal-profile-preview');
+                        const curtain = document.getElementById('swal-profile-curtain');
+                        const passwordInput = document.getElementById('swal-password');
+                        let vendado = false;
+
+                        // Preview da foto ao selecionar novo arquivo
+                        photoInput.addEventListener('change', function() {
+                            if (this.files && this.files[0]) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    preview.src = e.target.result;
+                                    curtain.classList.remove('active');
+                                    vendado = false;
+                                };
+                                reader.readAsDataURL(this.files[0]);
+                            }
+                        });
+
+                        // Função para detectar se é avatar padrão
+                        function isDefaultAvatar(src) {
+                            return src.includes('user.svg') || src.includes('user_vendado.svg');
+                        }
+
+                        passwordInput.addEventListener('input', function() {
+                            const src = preview.src;
+                            const isDefault = isDefaultAvatar(src);
+
+                            // Cortina aparece sempre que digitar senha
+                            if (passwordInput.value.length > 0) {
+                                curtain.classList.add('active');
+                            } else {
+                                curtain.classList.remove('active');
+                            }
+
+                            // Só faz o toggle entre user.svg e user_vendado.svg se for avatar padrão
+                            if (isDefault) {
+                                if (!vendado && passwordInput.value.length > 0) {
+                                    preview.src = "/assets/images/app/user_vendado.svg";
+                                    vendado = true;
+                                } else if (vendado && passwordInput.value.length === 0) {
+                                    preview.src = "/assets/images/app/user.svg";
+                                    vendado = false;
+                                }
+                            }
+                        });
+
                         document.getElementById('swal-username').focus();
                     }
                 });
 
                 // 3. Se o usuário confirmou a edição
                 if (formValues) {
-                    // Mostra loading enquanto envia os dados
                     Swal.fire({
                         title: 'Salvando...',
                         allowOutsideClick: false,
@@ -227,13 +380,14 @@
                         }
                     });
 
-                    // Envia os dados atualizados
+                    const formData = new FormData();
+                    formData.append('username', formValues.username);
+                    if (formValues.password) formData.append('password', formValues.password);
+                    if (formValues.photoFile) formData.append('profilePhoto', formValues.photoFile);
+
                     const updateResponse = await fetch(`/updateuser/${userId}`, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(formValues)
+                        body: formData
                     });
 
                     const result = await updateResponse.json();
@@ -242,7 +396,6 @@
                         throw new Error(result.message || 'Erro ao atualizar usuário');
                     }
 
-                    // Feedback de sucesso
                     Swal.fire({
                         position: 'top-end',
                         icon: 'success',
@@ -250,7 +403,6 @@
                         showConfirmButton: false,
                         timer: 1500
                     }).then(() => {
-                        // Atualiza a interface (pode ser um reload ou atualização via DOM)
                         window.location.reload();
                     });
                 }
@@ -295,6 +447,54 @@
               });
           }
         }
+
+        const fotoPerfil = document.getElementById('profile-preview');
+        const senhaInput = document.getElementById('senha');
+        const curtain = document.getElementById('profile-curtain');
+        let vendado = false;
+
+        // Detecta se a imagem é padrão (user.svg ou user_vendado.svg)
+        function isDefaultAvatar(src) {
+            return src.includes('user.svg') || src.includes('user_vendado.svg');
+        }
+
+        senhaInput.addEventListener('input', function() {
+            const src = fotoPerfil.src;
+            const isDefault = isDefaultAvatar(src);
+
+            // Cortina aparece sempre que digitar senha
+            if (senhaInput.value.length > 0) {
+                curtain.classList.add('active');
+            } else {
+                curtain.classList.remove('active');
+            }
+
+            // Só faz o toggle entre user.svg e user_vendado.svg se for avatar padrão
+            if (isDefault) {
+                if (!vendado && senhaInput.value.length > 0) {
+                    fotoPerfil.src = "/assets/images/app/user_vendado.svg";
+                    vendado = true;
+                } else if (vendado && senhaInput.value.length === 0) {
+                    fotoPerfil.src = "/assets/images/app/user.svg";
+                    vendado = false;
+                }
+            }
+        });
+
+        // Quando selecionar uma foto personalizada, remove o toggle e mostra a foto
+        document.getElementById('profile-photo').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPerfil.src = e.target.result;
+                    curtain.classList.remove('active');
+                    vendado = false;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

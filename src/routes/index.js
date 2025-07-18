@@ -153,7 +153,7 @@ router.put('/updateuser/:id', isAuthenticated, koaBody({
     let photoUrl = null;
     if (ctx.request.files && ctx.request.files.profilePhoto) {
         const file = ctx.request.files.profilePhoto;
-        if(file.newFilename && file ){
+        if(user.photo_url){
             fs.unlinkSync(`src/public${user.photo_url}`)
         }
         if (file.newFilename) {
@@ -162,7 +162,12 @@ router.put('/updateuser/:id', isAuthenticated, koaBody({
     }
     try {
         const result = await updateUser(id, { username, password, isAdmin, photoUrl });
-        ctx.session.user = { username, id: id, photo_url: photoUrl };
+        const referer = ctx.headers.referer || '';
+        const url = new URL(referer, `http://${ctx.headers.host}`); // Garante que sempre tem host/base
+        const pathname = url.pathname;
+        if(pathname != '/cadastrar'){
+            ctx.session.user = { username, id: id, photo_url: photoUrl };
+        }
         ctx.body = result;
     } catch (error) {
         ctx.status = 400;

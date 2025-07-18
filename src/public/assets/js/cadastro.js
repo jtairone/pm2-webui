@@ -1,5 +1,5 @@
 // Exemplo de JavaScript para manipular o formulário
-/* document.getElementById('formUsuario').addEventListener('submit', async function(e) {
+document.getElementById('formUsuario').addEventListener('submit', async function(e) {
   e.preventDefault();
   // Aqui você capturaria os valores do formulário
   const usuario = document.getElementById('usuario').value;
@@ -32,7 +32,7 @@
           location.reload();
       });
   }
-}); */
+});
 
 // Função para preview da imagem
 function previewImage(input) {

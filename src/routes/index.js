@@ -12,6 +12,9 @@ const AnsiConverter = require('ansi-to-html');
 const ansiConvert = new AnsiConverter();
 const authRouter = require('./auth');
 const { hasAdminUser, getAllUsers, getUserById, createUser, updateUser, deleteUserById  } = require('../services/user.service');
+const { koaBody } = require('koa-body');
+const path = require('path');
+const fs = require('fs');
 
 // função middleware antes das rotas
 router.use(async (ctx, next) => {
@@ -21,6 +24,20 @@ router.use(async (ctx, next) => {
     }
     await next();
 });
+
+// Middleware para aceitar multipart/form-data (uploads)
+// router.use(koaBody({
+//   multipart: true,
+//   formidable: {
+//     uploadDir: path.join(__dirname, '../public/uploads/profiles'),
+//     keepExtensions: true,
+//     maxFileSize: 5 * 1024 * 1024, // 5MB
+//     onFileBegin: (name, file) => {
+//       const ext = path.extname(file.name);
+//       file.path = path.join(__dirname, '../public/uploads/profiles', `${Date.now()}${ext}`);
+//     }
+//   }
+// }));
 
 // Inclua as rotas de autenticação
 router.use(authRouter.routes());
@@ -44,7 +61,7 @@ router.post('/login', loginRateLimiter, checkAuthentication, async (ctx) => {
     try {
         const user = await validateAdminUser(username, password)
         ctx.session.isAuthenticated = true;
-        ctx.session.user = { username }; // Armazena informações do usuário na sessão
+        ctx.session.user = { username, id: user.id, photo_url: user.photo_url }; // Armazena informações do usuário na sessão
         const isAdmin = user ? user.is_admin  : false;
         ctx.session.isAdmin =  isAdmin 
         return ctx.redirect('/apps')
@@ -72,8 +89,10 @@ router.get('/apps', isAuthenticated, async (ctx) => {
 
 router.get('/cadastrar', isAuthenticated, checkAdmin, async (ctx) => {
     const users =  await getAllUsers()
+    // Mapear photo_url para photoUrl para o frontend
+    const usersWithPhoto = users.map(u => ({ ...u, photoUrl: u.photo_url || null }));
     return await ctx.render('apps/cadastrar', {
-        users,
+        users: usersWithPhoto,
         session: ctx.session
     });
 });
@@ -81,23 +100,69 @@ router.get('/cadastrar', isAuthenticated, checkAdmin, async (ctx) => {
 router.get('/getuser/:id', isAuthenticated, async (ctx) => {
     const { id } = ctx.params
     const user =  await getUserById(id)
-    ctx.body = { 
+    ctx.body = {
         username: user.username,
-        password: user.password // Cuidado: geralmente não se envia a senha!
+        password: user.password, // Cuidado: geralmente não se envia a senha!
+        photoUrl: user.photo_url || null
     };
 });
 
-router.post('/cadastrar', isAuthenticated, async (ctx) => {
+router.post('/cadastrar', isAuthenticated, koaBody({
+  multipart: true,
+  formidable: {
+    uploadDir: path.join(__dirname, '../public/uploads/profiles'),
+    keepExtensions: true,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    onFileBegin: (name, file) => {
+      if (file && file.name) {
+        const ext = path.extname(file.name);
+        file.path = path.join(__dirname, '../public/uploads/profiles', `${Date.now()}${ext}`);
+      }
+    }
+  }
+}), async (ctx) => {
     const { username, password } = ctx.request.body;
-    await createUser(username, password)
-    return ctx.redirect('/cadastrar')
+    let photoUrl = null;
+    if (ctx.request.files && ctx.request.files.profilePhoto) {
+      const file = ctx.request.files.profilePhoto;
+      if (file.newFilename) {
+        photoUrl = `/uploads/profiles/${file.newFilename}`;
+      }
+    }
+    await createUser(username, password, false, photoUrl);
+    return ctx.redirect('/cadastrar');
 });
 
-router.put('/updateuser/:id', isAuthenticated, async (ctx) => {
+router.put('/updateuser/:id', isAuthenticated, koaBody({
+  multipart: true,
+  formidable: {
+    uploadDir: path.join(__dirname, '../public/uploads/profiles'),
+    keepExtensions: true,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    onFileBegin: (name, file) => {
+      if (file && file.name) {
+        const ext = path.extname(file.name);
+        file.path = path.join(__dirname, '../public/uploads/profiles', `${Date.now()}${ext}`);
+      }
+    }
+  }
+}), async (ctx) => {
     const { id } = ctx.params;
+    const user =  await getUserById(id)
     const { username, password, isAdmin } = ctx.request.body;
+    let photoUrl = null;
+    if (ctx.request.files && ctx.request.files.profilePhoto) {
+        const file = ctx.request.files.profilePhoto;
+        if(file.newFilename && file ){
+            fs.unlinkSync(`src/public${user.photo_url}`)
+        }
+        if (file.newFilename) {
+            photoUrl = `/uploads/profiles/${file.newFilename}`;
+        }
+    }
     try {
-        const result = await updateUser(id, { username, password, isAdmin });
+        const result = await updateUser(id, { username, password, isAdmin, photoUrl });
+        ctx.session.user = { username, id: id, photo_url: photoUrl };
         ctx.body = result;
     } catch (error) {
         ctx.status = 400;
@@ -107,6 +172,10 @@ router.put('/updateuser/:id', isAuthenticated, async (ctx) => {
 
 router.delete('/cadastrar/:userId', isAuthenticated, async (ctx) => {
     const { userId } = ctx.params;
+    const user =  await getUserById(userId)
+    if(user.photo_url){
+        fs.unlinkSync(`src/public${user.photo_url}`)
+    }
     await deleteUserById(userId)
     return ctx.status = 200;
 });

@@ -1,16 +1,18 @@
 const bcrypt = require('bcryptjs');
 const { db } = require('../config/database');
+const fs = require('fs')
 
-async function createUser(username, password, isAdmin = false) {
+async function createUser(username, password, isAdmin = false, photoUrl = null) {
   const hashedPassword = await bcrypt.hash(password, 10);
   return db('users').insert({
     username,
     password: hashedPassword,
-    is_admin: isAdmin
+    is_admin: isAdmin,
+    photo_url: photoUrl
   });
 }
 
-async function updateUser(id, { username, password, isAdmin }) {
+async function updateUser(id, { username, password, isAdmin, photoUrl }) {
   const currentUser = await db('users').where({ id }).first();
   if (!currentUser) {
     throw new Error('Usuário não encontrado');
@@ -18,10 +20,13 @@ async function updateUser(id, { username, password, isAdmin }) {
   const updateData = {
     username: username || currentUser.username,
     is_admin: isAdmin !== undefined ? isAdmin : currentUser.is_admin,
-    updated_at: db.fn.now() // Atualiza a data de modificação
+    updated_at: db.fn.now()
   };
   if (password && password.trim() !== '') {
     updateData.password = await bcrypt.hash(password, 10);
+  }
+  if (photoUrl) {
+    updateData.photo_url = photoUrl;
   }
   return db('users')
     .where({ id })
@@ -29,7 +34,6 @@ async function updateUser(id, { username, password, isAdmin }) {
 }
 
 async function deleteUserById(userId) {
-  console.log(typeof userId)
   return db('users').where({ id: userId }).del();
 }
 
@@ -38,11 +42,20 @@ async function getUserByUsername(username) {
 }
 
 async function getUserById(id) {
-  return db('users').where({ id }).first();
+  const user = await db('users').where({ id }).first();
+  if (!user) return null;
+  return {
+    ...user,
+    photoUrl: user.photo_url || null
+  };
 }
 
 async function getAllUsers() {
-  return db('users').select('*');
+  const users = await db('users').select('*');
+  return users.map(user => ({
+    ...user,
+    photoUrl: user.photo_url || null
+  }));
 }
 
 async function validateUser(username, password) {

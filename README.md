@@ -26,7 +26,7 @@ npm run start:dev
 
 #### TODO
 - [x] Adicionar paigna cadastrar mais usuários
-- [ ] Adicionar Usuários selecionar a foto do perfil
+- [x] Adicionar Usuários selecionar a foto do perfil
 - [ ] Adicionar logs em tempo real
 - [ ] Adicionar terminal web
 

@@ -18,6 +18,7 @@ async function initializeDatabase() {
       table.string('username').unique().notNullable();
       table.string('password').notNullable();
       table.boolean('is_admin').defaultTo(false);
+      table.string('photo_url');
       table.timestamps(true, true);
     });
     //console.log('Tabela de usuários criada com sucesso!');
